@@ -1,20 +1,33 @@
 <?php
-$nameErr = $emailErr = $genderErr = "";
-$name = $email = $website = $comment = $gender = "";
-$submitted = false;
+/**PHP Form Validation Lab*/
+// Initialize state and error variables
+$name = $email = $gender = $website = $phone = "";
+$nameErr = $emailErr = $genderErr = $websiteErr = $phoneErr = $passwordErr = $confirmErr = $termsErr = "";
+$attempts = 0;
+$valid = false;
+$successMsg = "";
+
+// Security: Sanitize input to prevent XSS
+function test_input($data) {
+    if ($data === null) return "";
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
+}
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $submitted = true;
+    // Increment submission counter
+    $attempts = isset($_POST["attempts"]) ? intval($_POST["attempts"]) + 1 : 1;
 
+    // Name Validation
     if (empty($_POST["name"])) {
         $nameErr = "Name is required";
     } else {
         $name = test_input($_POST["name"]);
-        if (!preg_match("/^[a-zA-Z-' ]*$/", $name)) {
-            $nameErr = "Only letters and white space allowed";
-        }
     }
 
+    // Email Validation
     if (empty($_POST["email"])) {
         $emailErr = "Email is required";
     } else {
@@ -24,30 +37,61 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
-    if (!empty($_POST["website"])) {
-        $website = test_input($_POST["website"]);
-        if (!filter_var($website, FILTER_VALIDATE_URL)) {
-            $website = "";
+    // Phone Validation (Regex)
+    if (empty($_POST["phone"])) {
+        $phoneErr = "Phone number is required";
+    } else {
+        $phone = test_input($_POST["phone"]);
+        if (!preg_match("/^[+]?[0-9 \-]{7,15}$/", $phone)) {
+            $phoneErr = "Invalid phone format";
         }
     }
 
-    $comment = empty($_POST["comment"]) ? "" : test_input($_POST["comment"]);
+    // Optional Website Validation
+    if (!empty($_POST["website"])) {
+        $website = test_input($_POST["website"]);
+        if (!filter_var($website, FILTER_VALIDATE_URL)) {
+            $websiteErr = "Invalid URL format";
+        }
+    }
 
+    // Gender Validation
     if (empty($_POST["gender"])) {
         $genderErr = "Gender is required";
     } else {
         $gender = test_input($_POST["gender"]);
     }
-}
 
-function test_input($data) {
-    $data = trim($data);
-    $data = stripslashes($data);
-    $data = htmlspecialchars($data);
-    return $data;
-}
+    // Password & Match Validation
+    $passValue = $_POST["password"] ?? "";
+    $confValue = $_POST["confirm"] ?? "";
 
-$formValid = $submitted && empty($nameErr) && empty($emailErr) && empty($genderErr);
+    if (empty($passValue)) {
+        $passwordErr = "Password is required";
+    } elseif (strlen($passValue) < 8) {
+        $passwordErr = "Password must be at least 8 characters long";
+    }
+
+    if (empty($confValue)) {
+        $confirmErr = "Please confirm your password";
+    } elseif ($passValue !== $confValue) {
+        $confirmErr = "Passwords do not match";
+    }
+
+    // Terms Agreement Validation
+    if (!isset($_POST["terms"])) {
+        $termsErr = "You must agree to the terms and conditions";
+    }
+
+    // Check if form is error-free
+    $valid = !$nameErr && !$emailErr && !$genderErr && !$websiteErr && !$phoneErr && !$passwordErr && !$confirmErr && !$termsErr;
+
+    if ($valid) {
+        $successMsg = "Form submitted successfully!";
+    }
+} else {
+    $attempts = 0;
+}
 ?>
 
 <!DOCTYPE html>
@@ -55,223 +99,192 @@ $formValid = $submitted && empty($nameErr) && empty($emailErr) && empty($genderE
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern PHP Form</title>
+    <title>PHP Lab: Form Validation</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@github/monaspace@1.0.1/release/variable.css">
+
     <style>
         :root {
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg-color: #f9fafb;
-            --card-bg: #ffffff;
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --error-red: #ef4444;
-            --success-green: #10b981;
-            --border-color: #e5e7eb;
+            --primary: #818cf8;
+            --primary-hover: #6366f1;
+            --bg: #0f172a;
+            --card: rgba(30, 41, 59, 0.7);
+            --text: #ffffff;
+            --muted: #94a3b8;
+            --error: #ff0026ff;
+            --success: #00ff9d;
+            --border: rgba(148, 163, 184, 0.1);
         }
+
+        /* Use Neon for general text */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Monaspace Neon', monospace; }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            line-height: 1.5;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background-color: var(--bg);
+            background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%);
+            color: var(--text);
             min-height: 100vh;
-            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
         }
 
-        .form-container {
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        .container {
             width: 100%;
             max-width: 500px;
+            background: var(--card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
         }
 
-        h2 {
-            margin: 0 0 8px 0;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #111827;
+        /* Use Xenon for headers */
+        h2 { font-family: 'Monaspace Xenon', monospace; font-size: 32px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+
+        /* Use Krypton for tech data */
+        .counter {
+            display: block;
+            text-align: center;
+            font-family: 'Monaspace Krypton', monospace;
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 30px;
         }
 
-        .required-note {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            margin-bottom: 24px;
+        .form-group { margin-bottom: 22px; position: relative; }
+
+        /* Use Argon for readability */
+        label { display: block; font-family: 'Monaspace Argon', monospace; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #cbd5e1; }
+
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            outline: none;
         }
 
-        .field-row {
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            font-weight: 600;
-            font-size: 0.875rem;
-            margin-bottom: 6px;
+        /* Krypton for technical errors */
+        .error-msg {
+            color: var(--error);
+            font-family: 'Monaspace Krypton', monospace;
+            font-size: 12px;
+            margin-top: 5px;
             display: block;
         }
 
-        input[type="text"], 
-        textarea {
+        .radio-group { display: flex; gap: 20px; }
+        .radio-label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #94a3b8; }
+        .radio-label input { accent-color: var(--primary); }
+
+        .checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 25px; font-size: 14px; }
+
+        .btn-submit {
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 1rem;
-            box-sizing: border-box;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        .radio-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 5px;
-        }
-
-        .radio-item {
-            display: flex;
-            align-items: center;
-            font-size: 0.95rem;
-        }
-
-        .radio-item input {
-            margin-right: 8px;
-            accent-color: var(--primary-color);
-        }
-
-        .error {
-            color: var(--error-red);
-            font-size: 0.8rem;
-            margin-top: 4px;
-        }
-
-        button[type="submit"] {
-            width: 100%;
-            background-color: var(--primary-color);
+            padding: 14px;
+            background: var(--primary);
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: 600;
+            border-radius: 12px;
+            font-family: 'Monaspace Xenon', monospace;
+            font-size: 16px;
+            font-weight: 700;
             cursor: pointer;
-            transition: background-color 0.2s;
             margin-top: 10px;
         }
 
-        button[type="submit"]:hover {
-            background-color: var(--primary-hover);
+        /* Radon for success branding */
+        .success-banner {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(52, 211, 153, 0.1);
+            border-radius: 16px;
         }
-
-        /* Message Boxes */
-        .success-box, .output-box {
-            margin-top: 24px;
-            padding: 16px;
-            border-radius: 8px;
-            font-size: 0.95rem;
-        }
-
-        .success-box {
-            background-color: #ecfdf5;
-            border: 1px solid #a7f3d0;
-            color: #065f46;
-        }
-
-        .output-box {
-            background-color: #f3f4f6;
-            border: 1px solid var(--border-color);
-        }
-
-        .output-box h3 {
-            margin-top: 0;
-            font-size: 1rem;
-            color: var(--text-main);
-        }
-
-        .output-box p {
-            margin: 4px 0;
-            color: var(--text-muted);
-        }
-
-        .output-box strong {
-            color: var(--text-main);
-        }
+        .success-banner h3 { font-family: 'Monaspace Radon', monospace; color: var(--success); font-size: 18px; }
     </style>
 </head>
 <body>
 
-<div class="form-container">
-    <h2>Get in Touch</h2>
-    <p class="required-note">Fields marked with <span style="color:var(--error-red)">*</span> are required.</p>
+<div class="container">
+    <h2>Registration</h2>
+    <span class="counter">Submission Attempt: <?php echo $attempts; ?></span>
 
-    <?php if ($formValid): ?>
-        <div class="success-box">
-            Form submitted successfully!
-        </div>
-    <?php endif; ?>
+    <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+        <input type="hidden" name="attempts" value="<?php echo $attempts; ?>">
 
-    <form method="post" action="<?= htmlspecialchars($_SERVER["PHP_SELF"]) ?>">
-
-        <div class="field-row">
-            <label for="name">Name <span style="color:var(--error-red)">*</span></label>
-            <input type="text" id="name" name="name" placeholder="Jane Doe" value="<?= $name ?>">
-            <?php if($nameErr): ?><span class="error"><?= $nameErr ?></span><?php endif; ?>
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" name="name" value="<?php echo $name; ?>">
+            <span class="error-msg"><?php echo $nameErr; ?></span>
         </div>
 
-        <div class="field-row">
-            <label for="email">E-mail <span style="color:var(--error-red)">*</span></label>
-            <input type="text" id="email" name="email" placeholder="jane@example.com" value="<?= $email ?>">
-            <?php if($emailErr): ?><span class="error"><?= $emailErr ?></span><?php endif; ?>
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" name="email" value="<?php echo $email; ?>">
+            <span class="error-msg"><?php echo $emailErr; ?></span>
         </div>
 
-        <div class="field-row">
-            <label for="website">Website</label>
-            <input type="text" id="website" name="website" placeholder="https://..." value="<?= $website ?>">
+        <div class="form-group">
+            <label>Phone Number</label>
+            <input type="text" name="phone" value="<?php echo $phone; ?>">
+            <span class="error-msg"><?php echo $phoneErr; ?></span>
         </div>
 
-        <div class="field-row">
-            <label for="comment">Comment</label>
-            <textarea id="comment" name="comment" placeholder="Tell us more..."><?= $comment ?></textarea>
+        <div class="form-group">
+            <label>Website (Optional)</label>
+            <input type="text" name="website" value="<?php echo $website; ?>">
+            <span class="error-msg"><?php echo $websiteErr; ?></span>
         </div>
 
-        <div class="field-row">
-            <label>Gender <span style="color:var(--error-red)">*</span></label>
+        <div class="form-group">
+            <label>Gender</label>
             <div class="radio-group">
-                <label class="radio-item"><input type="radio" name="gender" value="Female" <?= ($gender == "Female") ? "checked" : "" ?>> Female</label>
-                <label class="radio-item"><input type="radio" name="gender" value="Male" <?= ($gender == "Male") ? "checked" : "" ?>> Male</label>
-                <label class="radio-item"><input type="radio" name="gender" value="Other" <?= ($gender == "Other") ? "checked" : "" ?>> Other</label>
+                <label class="radio-label"><input type="radio" name="gender" value="male" <?php if($gender=="male") echo "checked";?>> Male</label>
+                <label class="radio-label"><input type="radio" name="gender" value="female" <?php if($gender=="female") echo "checked";?>> Female</label>
+                <label class="radio-label"><input type="radio" name="gender" value="other" <?php if($gender=="other") echo "checked";?>> Other</label>
             </div>
-            <?php if($genderErr): ?><span class="error"><?= $genderErr ?></span><?php endif; ?>
+            <span class="error-msg"><?php echo $genderErr; ?></span>
         </div>
 
-        <button type="submit">Send Message</button>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password">
+            <span class="error-msg"><?php echo $passwordErr; ?></span>
+        </div>
+
+        <div class="form-group">
+            <label>Confirm Password</label>
+            <input type="password" name="confirm">
+            <span class="error-msg"><?php echo $confirmErr; ?></span>
+        </div>
+
+        <label class="checkbox-row">
+            <input type="checkbox" name="terms" <?php if(isset($_POST["terms"])) echo "checked";?>>
+            <span>I agree to the Terms and Conditions</span>
+        </label>
+        <span class="error-msg"><?php echo $termsErr; ?></span>
+
+        <button type="submit" class="btn-submit">Register Now</button>
     </form>
 
-    <div class="output-box">
-        <?php if ($submitted && $formValid): ?>
-            <h3>Your Input:</h3>
-            <p><strong>Name:</strong> <?= $name ?></p>
-            <p><strong>E-mail:</strong> <?= $email ?></p>
-            <?php if (!empty($website)): ?><p><strong>Website:</strong> <?= $website ?></p><?php endif; ?>
-            <p><strong>Gender:</strong> <?= $gender ?></p>
-        <?php elseif ($submitted && !$formValid): ?>
-            <p style="color:var(--error-red); margin:0;">Please fix the errors and try again.</p>
-        <?php else: ?>
-            <p style="margin:0; font-style: italic;">Results will appear here after submission.</p>
-        <?php endif; ?>
+    <?php if($valid): ?>
+    <div class="success-banner">
+        <h3><?php echo $successMsg; ?></h3>
+        <p>
+            <strong>Name:</strong> <?php echo $name; ?><br>
+            <strong>Email:</strong> <?php echo $email; ?><br>
+            <strong>Phone:</strong> <?php echo $phone; ?><br>
+            <strong>Gender:</strong> <?php echo $gender; ?><br>
+            <strong>Website:</strong> <?php echo empty($website) ? "N/A" : $website; ?>
+        </p>
     </div>
+    <?php endif; ?>
 </div>
 
 </body>
