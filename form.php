@@ -6,7 +6,6 @@ $nameErr = $emailErr = $genderErr = $websiteErr = $phoneErr = $passwordErr = $co
 $attempts = 0;
 $valid = false;
 $successMsg = "";
-
 // Security: Sanitize input to prevent XSS
 function test_input($data) {
     if ($data === null) return "";
@@ -15,7 +14,6 @@ function test_input($data) {
     $data = htmlspecialchars($data);
     return $data;
 }
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Increment submission counter
     $attempts = isset($_POST["attempts"]) ? intval($_POST["attempts"]) + 1 : 1;
@@ -36,7 +34,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $emailErr = "Invalid email format";
         }
     }
-
     // Phone Validation (Regex)
     if (empty($_POST["phone"])) {
         $phoneErr = "Phone number is required";
@@ -46,7 +43,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $phoneErr = "Invalid phone format";
         }
     }
-
     // Optional Website Validation
     if (!empty($_POST["website"])) {
         $website = test_input($_POST["website"]);
@@ -54,14 +50,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $websiteErr = "Invalid URL format";
         }
     }
-
     // Gender Validation
     if (empty($_POST["gender"])) {
         $genderErr = "Gender is required";
     } else {
         $gender = test_input($_POST["gender"]);
     }
-
     // Password & Match Validation
     $passValue = $_POST["password"] ?? "";
     $confValue = $_POST["confirm"] ?? "";
@@ -71,7 +65,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } elseif (strlen($passValue) < 8) {
         $passwordErr = "Password must be at least 8 characters long";
     }
-
     if (empty($confValue)) {
         $confirmErr = "Please confirm your password";
     } elseif ($passValue !== $confValue) {
@@ -84,8 +77,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Check if form is error-free
-    $valid = !$nameErr && !$emailErr && !$genderErr && !$websiteErr && !$phoneErr && !$passwordErr && !$confirmErr && !$termsErr;
-
+    $valid = !$nameErr && !$emailErr && !$genderErr && !$websiteErr 
+        && !$phoneErr && !$passwordErr && !$confirmErr && !$termsErr;
     if ($valid) {
         $successMsg = "Form submitted successfully!";
     }
@@ -142,7 +135,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         /* Use Xenon for headers */
-        h2 { font-family: 'Monaspace Xenon', monospace; font-size: 32px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+        h2 { font-family: 'Monaspace Xenon', monospace; font-size: 32px; 
+            font-weight: 700; text-align: center; margin-bottom: 8px; }
 
         /* Use Krypton for tech data */
         .counter {
@@ -157,7 +151,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .form-group { margin-bottom: 22px; position: relative; }
 
         /* Use Argon for readability */
-        label { display: block; font-family: 'Monaspace Argon', monospace; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #cbd5e1; }
+        label { display: block; font-family: 'Monaspace Argon', monospace; 
+               font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #cbd5e1; }
 
         input[type="text"], input[type="email"], input[type="password"] {
             width: 100%;
@@ -182,7 +177,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .radio-group { display: flex; gap: 20px; }
         .radio-label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #94a3b8; }
         .radio-label input { accent-color: var(--primary); }
-
         .checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 25px; font-size: 14px; }
 
         .btn-submit {
@@ -245,9 +239,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="form-group">
             <label>Gender</label>
             <div class="radio-group">
-                <label class="radio-label"><input type="radio" name="gender" value="male" <?php if($gender=="male") echo "checked";?>> Male</label>
-                <label class="radio-label"><input type="radio" name="gender" value="female" <?php if($gender=="female") echo "checked";?>> Female</label>
-                <label class="radio-label"><input type="radio" name="gender" value="other" <?php if($gender=="other") echo "checked";?>> Other</label>
+                <label class="radio-label"><input type="radio" 
+                        name="gender" value="male" <?php if($gender=="male") echo "checked";?>> Male</label>
+                <label class="radio-label"><input type="radio" 
+                        name="gender" value="female" <?php if($gender=="female") echo "checked";?>> Female</label>
+                <label class="radio-label"><input type="radio" 
+                        name="gender" value="other" <?php if($gender=="other") echo "checked";?>> Other</label>
             </div>
             <span class="error-msg"><?php echo $genderErr; ?></span>
         </div>
@@ -286,6 +283,5 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
     <?php endif; ?>
 </div>
-
 </body>
 </html>
